@@ -7,7 +7,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from typing_extensions import TypedDict
-from agent.prompts import ROUTER_SYSTEM, SEARCH_SYSTEM, DIRECT_SYSTEM, OFF_TOPIC_MESSAGE
+from agent.prompts import ROUTER_SYSTEM, SEARCH_SYSTEM, DIRECT_SYSTEM, OFF_TOPIC_MESSAGE, GREETING_SYSTEM
 from agent.tools import tools
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,8 @@ def router(state: State) -> dict:
     word = response.content.strip().lower()
     if "off_topic" in word:
         route = "off_topic"
+    elif "greeting" in word:
+        route = "greeting"
     elif "search" in word:
         route = "search"
     else:
@@ -62,6 +64,13 @@ def off_topic_reply(_state: State) -> dict:
     return {"messages": [AIMessage(content=OFF_TOPIC_MESSAGE)]}
 
 
+def greeting_reply(state: State) -> dict:
+    logger.info("Greeting node invoked")
+    messages = [SystemMessage(content=GREETING_SYSTEM)] + state["messages"]
+    response = llm.invoke(messages)
+    return {"messages": [response]}
+
+
 def direct_answer(state: State) -> dict:
     logger.info("Answering directly from LLM knowledge (no search needed)")
     messages = [SystemMessage(content=DIRECT_SYSTEM)] + state["messages"]
@@ -71,11 +80,13 @@ def direct_answer(state: State) -> dict:
 
 # ── Conditional edges ─────────────────────────────────────────────────────────
 
-def route_after_router(state: State) -> Literal["search_agent", "direct_answer", "off_topic_reply"]:
+def route_after_router(state: State) -> Literal["search_agent", "direct_answer", "off_topic_reply", "greeting_reply"]:
     if state["route"] == "search":
         return "search_agent"
     if state["route"] == "off_topic":
         return "off_topic_reply"
+    if state["route"] == "greeting":
+        return "greeting_reply"
     return "direct_answer"
 
 
@@ -96,12 +107,14 @@ _builder = (
     .add_node("search_tools", ToolNode(tools))
     .add_node("direct_answer", direct_answer)
     .add_node("off_topic_reply", off_topic_reply)
+    .add_node("greeting_reply", greeting_reply)
     .add_edge(START, "router")
     .add_conditional_edges("router", route_after_router)
     .add_conditional_edges("search_agent", route_after_search)
     .add_edge("search_tools", "search_agent")
     .add_edge("direct_answer", END)
     .add_edge("off_topic_reply", END)
+    .add_edge("greeting_reply", END)
 )
 
 graph = _builder.compile(checkpointer=MemorySaver())

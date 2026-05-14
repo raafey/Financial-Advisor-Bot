@@ -42,12 +42,12 @@ async def query(body: QueryRequest, stream: bool = Query(default=True)):
     if stream:
         async def event_stream():
             if body.session_id:
-                yield f"data: {json.dumps({'session_id': body.session_id})}\n\n"
+                yield f"data: {json.dumps({'session_id': body.session_id}, ensure_ascii=False)}\n\n"
             async for event in active_graph.astream_events(messages, config=config, version="v2"):
                 node = event.get("metadata", {}).get("langgraph_node")
                 if (
                     event["event"] == "on_chat_model_stream"
-                    and node in ("search_agent", "direct_answer")
+                    and node in ("search_agent", "direct_answer", "greeting_reply")
                 ):
                     chunk = event["data"]["chunk"]
                     content = chunk.content
@@ -56,7 +56,7 @@ async def query(body: QueryRequest, stream: bool = Query(default=True)):
                             block.get("text", "") for block in content if isinstance(block, dict)
                         )
                     if content:
-                        yield f"data: {json.dumps({'token': content})}\n\n"
+                        yield f"data: {json.dumps({'token': content}, ensure_ascii=False)}\n\n"
                 elif (
                     event["event"] == "on_chain_end"
                     and node == "off_topic_reply"
@@ -65,7 +65,7 @@ async def query(body: QueryRequest, stream: bool = Query(default=True)):
                     if output_messages:
                         content = output_messages[-1].content
                         if content:
-                            yield f"data: {json.dumps({'token': content})}\n\n"
+                            yield f"data: {json.dumps({'token': content}, ensure_ascii=False)}\n\n"
             logger_config.info("Streaming query complete (session=%s)", body.session_id)
             yield "data: [DONE]\n\n"
 

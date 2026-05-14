@@ -7,9 +7,10 @@ A financial research API built with **LangGraph** and **FastAPI** that routes qu
 ## How It Works
 
 
-- **Router** — Claude Haiku classifies the query into `search`, `direct`, or `off_topic`
+- **Router** — Claude Haiku classifies the query into `search`, `direct`, `greeting`, or `off_topic`
 - **Search Agent** — Uses DuckDuckGo to fetch live market data, news, and financials, then synthesizes a response with numbered citations
 - **Direct Answer** — Answers definitions, concepts, and general finance questions from the LLM's knowledge
+- **Greeting** — Responds warmly to greetings, farewells, and small talk, then nudges the user toward finance topics
 - **Off-topic** — Returns a polite rejection for non-finance queries
 
 ---
@@ -239,6 +240,7 @@ Omitting `session_id` (or sending `null`) runs the query statelessly — no hist
 | `"What happened in the latest Fed meeting?"` | `search` |
 | `"Explain what a hedge fund is"` | `direct` |
 | `"How do options work?"` | `direct` |
+| `"Hello!"` / `"Thanks, bye!"` / `"What can you do?"` | `greeting` |
 | `"What's the best pizza in Berlin?"` | `off_topic` |
 
 ---
