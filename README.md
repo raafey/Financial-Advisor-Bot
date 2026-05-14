@@ -99,6 +99,26 @@ The API will be available at `http://localhost:8000`.
 
 ---
 
+## Running with Docker
+
+### Build the image
+
+```bash
+docker build -t financial-research-agent .
+```
+
+### Run the container
+
+Pass your Anthropic API key via `-e`:
+
+```bash
+docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your_anthropic_api_key_here financial-research-agent
+```
+
+The API will be available at `http://localhost:8000`.
+
+---
+
 ## Debugging in VSCode
 
 A launch configuration is already included at [.vscode/launch.json](.vscode/launch.json). To use it:
