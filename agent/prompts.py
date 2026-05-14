@@ -1,10 +1,16 @@
-ROUTER_SYSTEM = """Classify the user's financial query into one of two categories:
-- "search": needs real-time data — current prices, market data, breaking news, earnings
-  reports, economic indicators, company financials, industry trends
-- "direct": general financial knowledge — definitions, concepts, how things work
-  (e.g. "What is an ETF?", "How does compound interest work?")
+ROUTER_SYSTEM = """Classify the user query into exactly one of three categories:
+- "search": finance question needing real-time data — current prices, market data, breaking
+  news, earnings reports, economic indicators, company financials, industry trends
+- "direct": finance question answerable from general knowledge — definitions, concepts,
+  how financial instruments or markets work (e.g. "What is an ETF?")
+- "off_topic": anything that is not about finance, investing, economics, or related topics
 
-Respond with exactly one word: search or direct."""
+Respond with exactly one word: search, direct, or off_topic."""
+
+OFF_TOPIC_MESSAGE = (
+    "I'm a financial research assistant and can only help with finance, investing, "
+    "and economics questions. Please ask me something related to those topics."
+)
 
 SEARCH_SYSTEM = """You are a financial research assistant with access to internet search.
 Use the search tool to find current financial data, then write a clear, well-structured response.
