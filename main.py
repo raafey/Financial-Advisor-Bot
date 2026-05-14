@@ -1,11 +1,12 @@
 import json
+import uuid
 import logger_config
 import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -17,6 +18,7 @@ app = FastAPI(title="Financial Research Agent")
 
 class QueryRequest(BaseModel):
     query: str
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
 
 @app.get("/health")
@@ -26,12 +28,14 @@ def health():
 
 @app.post("/query")
 async def query(body: QueryRequest, stream: bool = Query(default=True)):
-    logger_config.info("Received query: %r (stream=%s)", body.query, stream)
+    logger_config.info("Received query: %r (stream=%s, session=%s)", body.query, stream, body.session_id)
+    config = {"configurable": {"thread_id": body.session_id}}
     messages = {"messages": [HumanMessage(content=body.query)]}
 
     if stream:
         async def event_stream():
-            async for event in graph.astream_events(messages, version="v2"):
+            yield f"data: {json.dumps({'session_id': body.session_id})}\n\n"
+            async for event in graph.astream_events(messages, config=config, version="v2"):
                 if (
                     event["event"] == "on_chat_model_stream"
                     and event.get("metadata", {}).get("langgraph_node") in ("search_agent", "direct_answer")
@@ -44,12 +48,12 @@ async def query(body: QueryRequest, stream: bool = Query(default=True)):
                         )
                     if content:
                         yield f"data: {json.dumps({'token': content})}\n\n"
-            logger_config.info("Streaming query complete")
+            logger_config.info("Streaming query complete (session=%s)", body.session_id)
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
-    result = await graph.ainvoke(messages)
+    result = await graph.ainvoke(messages, config=config)
     answer = result["messages"][-1].content
-    logger_config.info("Query complete — answer: %r", answer)
-    return {"answer": answer}
+    logger_config.info("Query complete (session=%s) — answer: %r", body.session_id, answer)
+    return {"session_id": body.session_id, "answer": answer}

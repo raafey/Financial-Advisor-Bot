@@ -2,6 +2,7 @@ import logging
 from typing import Annotated, Literal
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
@@ -101,5 +102,5 @@ graph = (
     .add_edge("search_tools", "search_agent")
     .add_edge("direct_answer", END)
     .add_edge("off_topic_reply", END)
-    .compile()
+    .compile(checkpointer=MemorySaver())
 )
