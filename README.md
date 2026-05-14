@@ -232,6 +232,55 @@ Omitting `session_id` (or sending `null`) runs the query statelessly — no hist
 
 ---
 
+## Error Codes
+
+| Code | Name | Endpoint | Description |
+|------|------|----------|-------------|
+| `400` | Bad Request | `POST /query` | `query` field is missing, empty, or contains only whitespace. |
+| `422` | Unprocessable Entity | `POST /query` | Request body failed schema validation (e.g. wrong field type). Returned automatically by FastAPI. |
+| `500` | Internal Server Error | `POST /query` | The agent graph threw an unexpected exception (LLM call failure, tool error, etc.). In non-streaming mode this is a standard JSON error response. In streaming mode a final `{"error": "Agent execution failed", "code": 500}` event is emitted before `[DONE]`. |
+
+#### Example 400 response
+
+```bash
+curl -X POST "http://localhost:8000/query?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "   "}'
+```
+
+```json
+{ "detail": "Query must not be empty" }
+```
+
+#### Example 422 response
+
+```bash
+curl -X POST "http://localhost:8000/query?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"not_a_query": "hello"}'
+```
+
+```json
+{
+  "detail": [
+    {
+      "type": "missing",
+      "loc": ["body", "query"],
+      "msg": "Field required"
+    }
+  ]
+}
+```
+
+#### Example 500 stream event
+
+```
+data: {"error": "Agent execution failed", "code": 500}
+data: [DONE]
+```
+
+---
+
 ### Example queries
 
 | Query | Route taken |
