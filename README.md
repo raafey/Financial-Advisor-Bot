@@ -113,7 +113,7 @@ docker build -t financial-research-agent .
 Pass your Anthropic API key via `-e`:
 
 ```bash
-docker run -p 8000:8000 -e ANTHROPIC_API_KEY=your_anthropic_api_key_here financial-research-agent
+docker run -it -p 8000:8000 -e ANTHROPIC_API_KEY=your_anthropic_api_key_here financial-research-agent
 ```
 
 The API will be available at `http://localhost:8000`.
