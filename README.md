@@ -170,6 +170,7 @@ data: {"token": "Apple"}
 data: {"token": " (AAPL)"}
 data: {"token": " is currently trading..."}
 ...
+data: [DONE]
 ```
 
 ---
@@ -189,6 +190,44 @@ curl -X POST "http://localhost:8000/query?stream=false" \
   "answer": "A price-to-earnings (P/E) ratio is a valuation metric..."
 }
 ```
+
+---
+
+### Contextual (multi-turn) chat
+
+Pass a `session_id` string in the request body to maintain conversation history across multiple requests. The agent will remember prior messages within that session.
+
+```bash
+# First turn
+curl -X POST "http://localhost:8000/query?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is Tesla'\''s current stock price?", "session_id": "user-abc-123"}'
+```
+
+```json
+{
+  "answer": "Tesla (TSLA) is currently trading at ...",
+  "session_id": "user-abc-123"
+}
+```
+
+```bash
+# Follow-up turn — the agent remembers the previous question
+curl -X POST "http://localhost:8000/query?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "How has it performed over the last month?", "session_id": "user-abc-123"}'
+```
+
+When streaming with a `session_id`, the first event confirms the session before tokens begin:
+
+```
+data: {"session_id": "user-abc-123"}
+data: {"token": "Over the last month, Tesla..."}
+...
+data: [DONE]
+```
+
+Omitting `session_id` (or sending `null`) runs the query statelessly — no history is stored or recalled.
 
 ---
 

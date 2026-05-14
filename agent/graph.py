@@ -89,7 +89,7 @@ def route_after_search(state: State) -> Literal["search_tools", "__end__"]:
 
 # ── Graph ─────────────────────────────────────────────────────────────────────
 
-graph = (
+_builder = (
     StateGraph(State)
     .add_node("router", router)
     .add_node("search_agent", search_agent)
@@ -102,5 +102,7 @@ graph = (
     .add_edge("search_tools", "search_agent")
     .add_edge("direct_answer", END)
     .add_edge("off_topic_reply", END)
-    .compile(checkpointer=MemorySaver())
 )
+
+graph = _builder.compile(checkpointer=MemorySaver())
+stateless_graph = _builder.compile()
