@@ -44,7 +44,7 @@ python-dotenv==1.2.2
 
 ```bash
 git clone <repo-url>
-cd MuhammadRaafeyTariq_TestAssignment_ScalableCapital
+cd Financial-Advisor-Bot
 ```
 
 ### 2. Create a virtual environment
